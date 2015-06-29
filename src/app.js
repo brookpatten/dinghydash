@@ -129,7 +129,7 @@ function init(e) {
   var locationOptions = {
     enableHighAccuracy: true, 
     maximumAge: 0, 
-    timeout: 5000
+    timeout: 10000
   };
   positionWatcherId = navigator.geolocation.watchPosition(locationSuccess, locationError, locationOptions);
   //navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
@@ -153,6 +153,9 @@ function display(pos){
     //if the data is old, clear it
     console.log('existing data is old');
     lastPos=null;
+    lastPosAt=null;
+    previousPos=null;
+    previousPosAt=null;
   }
   
   if(pos==null && startTime!=null && startTime>=now){
@@ -222,15 +225,19 @@ function display(pos){
     var val = vmc(previousPos,previousPosAt,lastPos,lastPosAt,marks[marks.length-2]);
     timeText.text(val.toFixed(1)+marks[marks.length-2].name.substring(0,1).toUpperCase());
   }
-  else if(marks!=null && marks.length>0){
+  else if(marks!=null && marks.length==1){
     timeText.text("W");//we can safely assume we're starting to windward at least
   }
   else{
     timeText.text("---");
   }
   
-  if(lastPos!=null){
-    
+  if(lastPos!=null && previousPos!=null){
+    var val = speed(previousPos,previousPosAt,lastPos,lastPosAt);
+    speedText.text(val.toFixed(1)+"");
+    headingText.text(lastPos.coords!=null && lastPos.coords.heading!=null && !isNaN(lastPos.coords.heading) ? (lastPos.coords.heading).toFixed(1)+"°":"---");
+  }
+  else if(lastPos!=null){
     speedText.text(lastPos.coords!=null && lastPos.coords.speed!=null && !isNaN(lastPos.coords.speed) ? (lastPos.coords.speed * knotConversion).toFixed(1)+"" : "---");
     headingText.text(lastPos.coords!=null && lastPos.coords.heading!=null && !isNaN(lastPos.coords.heading) ? (lastPos.coords.heading).toFixed(1)+"°":"---");
   }
