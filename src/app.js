@@ -45,6 +45,9 @@ main.on('click', 'down',function(e){
     Vibe.vibrate('short');
   }
   else if(lastPos!=null){
+    if(startTime==null){//if we haven't started yet, the user is marking the windward mark
+      marks = new Array();
+    }
     appendMark(lastPos);
     Vibe.vibrate('short');
   }
@@ -65,7 +68,10 @@ main.on('click', 'up',function(e){
     save();
     Vibe.vibrate('short');
   }
-  else if(lastPos!=null){
+  else if(lastPos!=null){//if we haven't started yet, the user is marking the windward mark
+    if(startTime==null){
+      marks = new Array();
+    }
     appendMark(lastPos);
     Vibe.vibrate('short');
   }
@@ -74,16 +80,23 @@ main.on('click', 'up',function(e){
 main.on('click', 'select',function(e){
   console.log('select');
 
-  startTime = new Date(Date.now() + (5 * 60 * 1000));//now + 5 minutes
-  marks=new Array();//clear out any marks leftover from a previous race
-  console.log('setting starttime to '+startTime);
-  save();
+  if(startTime==null){
+    startTime = new Date(Date.now() + (5 * 60 * 1000));//now + 5 minutes
+    console.log('set starttime to '+startTime);
+    save();
+  }
+  else{
+    startTime = null;//clear countdown
+    marks=new Array();//clear out any marks leftover from a previous race
+    console.log('cleared countdown');
+    save();
+  }
   
   Vibe.vibrate('short');
 });
 
 function save(){
-  localStorage.setItem("startTime", startTime.valueOf());
+  localStorage.setItem("startTime", startTime!=null ? startTime.valueOf() : null);
   localStorage.setItem("marks",JSON.stringify(marks));
 }
 
@@ -96,12 +109,12 @@ function load(){
   marks = JSON.parse(localStorage.getItem('marks'));
 }
 
-function appendMark(pos){
-  if(marks.length < 2 || marks[marks.length-1].name=="leeward"){
-    pos.name="windward";
+function appendMark(pos,isStart){
+  if(isStart==true || marks.length>0 && marks[marks.length-1].name=="windward"){
+    pos.name="leeward";
   }
   else{
-    pos.name="leeward";
+    pos.name="windward";
   }
   marks.push(pos);
   save();
@@ -169,8 +182,7 @@ function display(pos){
         Vibe.vibrate('long');
         
         lastPos.name="leeward";
-        marks.push(lastPos);
-        save();
+        appendMark(lastPos,true);
         console.log('marked start (leeward)');
       }
       else if(difference.getSeconds()<10){
